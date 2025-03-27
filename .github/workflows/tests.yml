@@ -47,3 +47,11 @@ jobs:
         run: pre-commit run --all-files
         env:
           SKIP: no-commit-to-branch
+
+      - name: Test notebooks
+        run: |
+          ipython -c "import osmnx; print(osmnx.__version__)"
+          rm -r -f *.py
+          jupyter nbconvert --to python *.ipynb
+          for filename in *.py; do ipython "$filename"; done
+          rm -r -f *.py
