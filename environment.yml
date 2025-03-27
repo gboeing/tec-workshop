@@ -1,0 +1,10 @@
+name: tec
+channels:
+  - conda-forge
+dependencies:
+  - jupyterlab
+  - numpy<2
+  - osmnx=2.0.*
+  - pandana=0.7.*
+  - pre-commit
+  - python=3.12.*

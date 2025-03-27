@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+
+    defaults:
+      run:
+        shell: bash -elo pipefail {0}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.*
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install requirements
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip check
+
+      - name: Cache pre-commit
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit/
+          key: pre-commit-${{ matrix.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Run pre-commit checks
+        run: pre-commit run --all-files
+        env:
+          SKIP: no-commit-to-branch
+
+      - name: Test notebooks
+        run: |
+          ipython -c "import osmnx; print(osmnx.__version__)"
+          rm -r -f *.py
+          jupyter nbconvert --to python *.ipynb
+          for filename in *.py; do ipython "$filename"; done
+          rm -r -f *.py
